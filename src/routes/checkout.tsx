@@ -24,7 +24,7 @@ function Checkout() {
   const [a, setA] = useState<Address>(EMPTY);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [qty, setQty] = useState(1);
-  const [pay, setPay] = useState('cod');
+  const [orderId, setOrderId] = useState<string | null>(null);
   useEffect(() => { try { const r = localStorage.getItem(KEY); if (r) setA(JSON.parse(r) as Address); } catch { /* ignore */ } }, []);
   const set = (k: keyof Address) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setA({ ...a, [k]: e.target.value });
   const saveAddress = () => {
