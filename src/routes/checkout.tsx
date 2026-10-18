@@ -63,10 +63,25 @@ function Checkout() {
           </div>}
         </section>
         <section className="co-step">
-          <h2><span>3</span> Payment options</h2>
-          {step === 3 && <div className="co-pay">
-            {([['cod', 'Cash on delivery'], ['upi', 'UPI'], ['card', 'Credit / Debit card']] as const).map(([v, l]) => <label key={v}><input type="radio" checked={pay === v} onChange={() => setPay(v)} /> {l}</label>)}
-            <button type="button" className="fk-buy" onClick={() => { toast.success('Order placed! We will confirm on your mobile.', { icon: <CheckCircle2 /> }); }}>Place order · {usd(price)}</button>
+          <h2><span>3</span> Payment</h2>
+          {step === 3 && !orderId && <div className="co-pay">
+            <label><input type="radio" checked readOnly /> Cash on delivery — pay when your watch arrives</label>
+            <button type="button" className="fk-buy" onClick={() => {
+              const id = `PF${Date.now().toString(36).toUpperCase()}`;
+              try {
+                const orders = JSON.parse(localStorage.getItem('pf-orders') ?? '[]') as unknown[];
+                orders.push({ id, item: w.id, qty, price, address: a, payment: 'cod', placedAt: new Date().toISOString() });
+                localStorage.setItem('pf-orders', JSON.stringify(orders));
+              } catch { /* ignore */ }
+              setOrderId(id);
+              toast.success('Order placed!', { icon: <CheckCircle2 /> });
+            }}>Place order · {usd(price)}</button>
+          </div>}
+          {orderId && <div className="co-pay">
+            <p><CheckCircle2 size={18} className="fk-delivery-free" /> <b>Order confirmed!</b></p>
+            <p>Order ID: <b>{orderId}</b></p>
+            <p>Pay <b>{usd(price)}</b> in cash when your {w.name} is delivered to {a.city}. We will call {a.mobile} to confirm.</p>
+            <Link to="/shop/$watchId" params={{ watchId: w.id }} className="fk-buy co-continue">Continue shopping</Link>
           </div>}
         </section>
       </div>
