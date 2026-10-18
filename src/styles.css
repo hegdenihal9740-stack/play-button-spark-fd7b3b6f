@@ -995,7 +995,6 @@ body:has(.watch-page) { background: var(--midnight-sky); }
 .fk-full-stage .fk-feat { max-width: min(80vh, 100%); }
 
 /* Shop page, header, mobile login and checkout */
-body:has(.shop-page) .customer-account-access { display: none; }
 .shop-page { min-height: 100vh; background: var(--fk-bg); color: var(--fk-ink); font-family: "Karla", sans-serif; }
 .shop-page .fk-page { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 .shop-header { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .75rem 1rem; background: var(--fk-bg); border-bottom: 1px solid var(--fk-line); }
