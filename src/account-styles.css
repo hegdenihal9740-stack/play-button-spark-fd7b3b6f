@@ -1,0 +1,6 @@
+.plane-app .site-nav-note { margin-right: 180px; }
+.customer-account-access { position: fixed; right: 16px; top: 16px; z-index: 40; }
+@media (max-width: 600px) {
+  .customer-account-access { right: 12px; top: 18px; }
+  .customer-account-access a { font-size: 11px; padding-inline: 10px; }
+}
