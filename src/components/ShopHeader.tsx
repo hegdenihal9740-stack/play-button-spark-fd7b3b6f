@@ -4,6 +4,7 @@ import { Instagram, Mail, MessageCircle, MoreVertical, Phone, UserRound, Shoppin
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { cart, useCart } from '@/lib/cart';
+import { supabase } from '@/integrations/supabase/client';
 
 // Contact links — placeholders until the owner shares real accounts.
 const contacts = [
@@ -21,21 +22,38 @@ export const getLocalCustomer = (): LocalCustomer | null => {
 function MobileLogin({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const save = () => {
+  const [otp, setOtp] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const phone = `+91${mobile}`;
+  const send = async () => {
     if (!name.trim()) { toast.error('Enter your name'); return; }
     if (!/^[6-9]\d{9}$/.test(mobile)) { toast.error('Enter a valid 10-digit mobile number'); return; }
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: true, data: { display_name: name.trim() } } });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setSent(true); toast.success(`OTP sent to ${phone}`);
+  };
+  const verify = async () => {
+    setBusy(true);
+    const { data, error } = await supabase.auth.verifyOtp({ phone, token: otp, type: 'sms' });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
     localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name: name.trim(), mobile }));
-    toast.success(`Welcome, ${name.trim()}!`);
-    onOpenChange(false);
     window.dispatchEvent(new Event('pf-customer'));
+    toast.success(`Welcome, ${name.trim()}!`);
+    onOpenChange(false); setSent(false); setOtp('');
+    void data;
   };
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="shop-login">
       <DialogTitle className="shop-login-title">Login / Register</DialogTitle>
-      <DialogDescription className="shop-login-sub">Enter your name and mobile number — no OTP needed.</DialogDescription>
-      <input className="shop-input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-      <div className="shop-phone"><span>+91</span><input inputMode="numeric" maxLength={10} placeholder="Mobile number" value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} /></div>
-      <button type="button" className="fk-buy shop-login-btn" onClick={save}>Continue</button>
+      <DialogDescription className="shop-login-sub">We will send a one-time code (OTP) to your mobile number.</DialogDescription>
+      <input className="shop-input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} disabled={sent} />
+      <div className="shop-phone"><span>+91</span><input inputMode="numeric" maxLength={10} placeholder="Mobile number" value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} disabled={sent} /></div>
+      {sent && <input className="shop-input" inputMode="numeric" maxLength={6} placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} />}
+      <button type="button" className="fk-buy shop-login-btn" disabled={busy} onClick={sent ? verify : send}>{busy ? 'Please wait…' : sent ? 'Verify OTP' : 'Send OTP'}</button>
     </DialogContent>
   </Dialog>;
 }
