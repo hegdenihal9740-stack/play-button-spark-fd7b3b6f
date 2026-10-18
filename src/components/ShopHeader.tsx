@@ -45,7 +45,13 @@ function MobileLogin({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
 export function ShopHeader() {
   const [menu, setMenu] = useState(false);
   const [login, setLogin] = useState(false);
-  const { user } = useCustomer();
+  const [customer, setCustomer] = useState<LocalCustomer | null>(null);
+  useEffect(() => {
+    const read = () => setCustomer(getLocalCustomer());
+    read();
+    window.addEventListener('pf-customer', read);
+    return () => window.removeEventListener('pf-customer', read);
+  }, []);
   const { count } = useCart();
   return <header className="shop-header">
     <div className="shop-menu-wrap">
