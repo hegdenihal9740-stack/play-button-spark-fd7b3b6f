@@ -4,6 +4,7 @@ import { Instagram, Mail, MessageCircle, MoreVertical, Phone, UserRound, Shoppin
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { cart, useCart } from '@/lib/cart';
+import { supabase } from '@/integrations/supabase/client';
 
 // Contact links — placeholders until the owner shares real accounts.
 const contacts = [
