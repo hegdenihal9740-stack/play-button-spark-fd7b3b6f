@@ -14,41 +14,30 @@ const contacts = [
   { label: 'Email', icon: Mail, href: '#' },
 ];
 
+const CUSTOMER_KEY = 'pf-customer';
+export type LocalCustomer = { name: string; mobile: string };
+export const getLocalCustomer = (): LocalCustomer | null => {
+  try { const r = localStorage.getItem(CUSTOMER_KEY); return r ? (JSON.parse(r) as LocalCustomer) : null; } catch { return null; }
+};
+
 function MobileLogin({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
-  const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const phone = `+91${mobile}`;
-  const send = async () => {
+  const save = () => {
+    if (!name.trim()) { toast.error('Enter your name'); return; }
     if (!/^[6-9]\d{9}$/.test(mobile)) { toast.error('Enter a valid 10-digit mobile number'); return; }
-    if (mode === 'register' && !name.trim()) { toast.error('Enter your name'); return; }
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithOtp({ phone, options: mode === 'register' ? { shouldCreateUser: true, data: { display_name: name.trim() } } : { shouldCreateUser: false } });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    setSent(true); toast.success(`OTP sent to ${phone}`);
-  };
-  const verify = async () => {
-    setBusy(true);
-    const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: 'sms' });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(mode === 'register' ? 'Account created' : 'Logged in'); onOpenChange(false); setSent(false); setOtp('');
+    localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name: name.trim(), mobile }));
+    toast.success(`Welcome, ${name.trim()}!`);
+    onOpenChange(false);
+    window.dispatchEvent(new Event('pf-customer'));
   };
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="shop-login">
-      <DialogTitle className="shop-login-title">{mode === 'login' ? 'Login' : 'Register'}</DialogTitle>
-      <DialogDescription className="shop-login-sub">Use your mobile number to {mode === 'login' ? 'sign in' : 'create an account'}.</DialogDescription>
-      <div className="shop-tabs">
-        {(['login', 'register'] as const).map((m) => <button key={m} type="button" className={mode === m ? 'is-active' : ''} onClick={() => { setMode(m); setSent(false); }}>{m === 'login' ? 'Login' : 'Register'}</button>)}
-      </div>
-      {mode === 'register' && <input className="shop-input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />}
-      <div className="shop-phone"><span>+91</span><input inputMode="numeric" maxLength={10} placeholder="Mobile number" value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} disabled={sent} /></div>
-      {sent && <input className="shop-input" inputMode="numeric" maxLength={6} placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} />}
-      <button type="button" className="fk-buy shop-login-btn" disabled={busy} onClick={sent ? verify : send}>{busy ? 'Please wait…' : sent ? 'Verify OTP' : 'Request OTP'}</button>
+      <DialogTitle className="shop-login-title">Login / Register</DialogTitle>
+      <DialogDescription className="shop-login-sub">Enter your name and mobile number — no OTP needed.</DialogDescription>
+      <input className="shop-input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="shop-phone"><span>+91</span><input inputMode="numeric" maxLength={10} placeholder="Mobile number" value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} /></div>
+      <button type="button" className="fk-buy shop-login-btn" onClick={save}>Continue</button>
     </DialogContent>
   </Dialog>;
 }
